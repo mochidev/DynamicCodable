@@ -81,3 +81,17 @@ public enum DynamicCodable: Equatable, Hashable {
     /// - Tag: DynamicCodable.empty
     case empty
 }
+
+extension DynamicCodable {
+    /// A convenience case for creating a [float32 case](x-source-tag://DynamicCodable.float32).
+    /// - Parameter float: The float to represent.
+    /// - Returns: DynamicCodable.float32
+    @inlinable
+    public static func float(_ float: Float) -> Self { .float32(float) }
+    
+    /// A convenience case for creating a [float64 case](x-source-tag://DynamicCodable.float64).
+    /// - Parameter float: The float to represent.
+    /// - Returns: DynamicCodable.float64
+    @inlinable
+    public static func double(_ double: Double) -> Self { .float64(double) }
+}

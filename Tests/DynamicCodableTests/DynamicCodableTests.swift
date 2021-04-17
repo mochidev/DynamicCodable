@@ -7,5 +7,7 @@ final class DynamicCodableTests: XCTestCase {
         XCTAssertNotEqual(DynamicCodable.empty, .nil)
         XCTAssertEqual(DynamicCodable.unkeyed([.nil]), .unkeyed([.nil]))
         XCTAssertNotEqual(DynamicCodable.unkeyed([]), .unkeyed([.nil]))
+        XCTAssertEqual(DynamicCodable.float(5.2), .float32(5.2))
+        XCTAssertEqual(DynamicCodable.double(12.5), .float64(12.5))
     }
 }
