@@ -59,3 +59,47 @@ extension DynamicCodable.Key: CodingKey {
         self = .int(intValue)
     }
 }
+
+extension Dictionary where Key == DynamicCodable.Key, Value == DynamicCodable {
+    /// A convenience accessor for getting or setting the value for a [.string(…)](x-source-tag://DynamicCodable.Key.string) key.
+    /// - Parameter key: The `String` key to find in the dictionary.
+    /// - Returns: The value associated with `.string(key)` in the dictionary.
+    @inlinable
+    public subscript(key: String) -> DynamicCodable? {
+        get {
+            self[.string(key)]
+        }
+        set(newValue) {
+            self[.string(key)] = newValue
+        }
+    }
+    
+    /// A convenience accessor for getting the value for a [.string(…)](x-source-tag://DynamicCodable.Key.string) key, returning `defaultValue` if .
+    /// - Parameter key: The `String` key to find in the dictionary.
+    /// - Parameter defaultValue: The default value to use if `key` doesn't exist in the dictionary.
+    /// - Returns: The value associated with `.string(key)` in the dictionary; otherwise, `defaultValue`.
+    @inlinable public subscript(key: String, default defaultValue: @autoclosure () -> DynamicCodable) -> DynamicCodable {
+        self[.string(key)] ?? defaultValue()
+    }
+    
+    /// A convenience accessor for getting or setting the value for a [.int(…)](x-source-tag://DynamicCodable.Key.int) key.
+    /// - Parameter key: The `Int` key to find in the dictionary.
+    /// - Returns: The value associated with `.int(key)` in the dictionary.
+    @inlinable
+    public subscript(key: Int) -> DynamicCodable? {
+        get {
+            self[.int(key)]
+        }
+        set(newValue) {
+            self[.int(key)] = newValue
+        }
+    }
+    
+    /// A convenience accessor for getting the value for a [.int(…)](x-source-tag://DynamicCodable.Key.int) key.
+    /// - Parameter key: The `Int` key to find in the dictionary.
+    /// - Parameter defaultValue: The default value to use if `key` doesn't exist in the dictionary. 
+    /// - Returns: The value associated with `.int(key)` in the dictionary; otherwise, `defaultValue`.
+    @inlinable public subscript(key: Int, default defaultValue: @autoclosure () -> DynamicCodable) -> DynamicCodable {
+        self[.int(key)] ?? defaultValue()
+    }
+}
