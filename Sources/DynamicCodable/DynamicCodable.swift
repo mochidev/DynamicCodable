@@ -11,7 +11,7 @@
 public enum DynamicCodable: Equatable, Hashable {
     /// A value coded using a keyed container such as a dictionary.
     /// - Tag: DynamicCodable.keyed
-    case keyed([String : Self])
+    case keyed([Key : Self])
     
     /// A value coded using a keyed container such as an array.
     /// - Tag: DynamicCodable.unkeyed
