@@ -35,4 +35,559 @@ final class DynamicCodableTests: XCTestCase {
         test[2] = .int(2)
         XCTAssertEqual(test[.int(2)], .int(2))
     }
+    
+    func testPrimitiveDecoding() {
+        do {
+            let data = """
+            {
+            }
+            """.data(using: .utf8)!
+            
+            let testRepresentation: DynamicCodable = .keyed([:])
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let data = """
+            [
+            ]
+            """.data(using: .utf8)!
+            
+            let testRepresentation: DynamicCodable = .unkeyed([])
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let data = """
+            null
+            """.data(using: .utf8)!
+            
+            let testRepresentation: DynamicCodable = .nil
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let data = """
+            true
+            """.data(using: .utf8)!
+            
+            let testRepresentation: DynamicCodable = .bool(true)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let data = """
+            false
+            """.data(using: .utf8)!
+            
+            let testRepresentation: DynamicCodable = .bool(false)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let data = """
+            "string"
+            """.data(using: .utf8)!
+            
+            let testRepresentation: DynamicCodable = .string("string")
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let data = """
+            1
+            """.data(using: .utf8)!
+            
+            let testRepresentation: DynamicCodable = .int(1)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let data = """
+            9223372036854775808
+            """.data(using: .utf8)!
+            
+            let testRepresentation: DynamicCodable = .uint(9223372036854775808)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let data = """
+            3.14
+            """.data(using: .utf8)!
+            
+            let testRepresentation: DynamicCodable = .double(3.14)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+    }
+    
+    func testComplexDecoding() {
+        do {
+            let data = """
+            {
+                "keyed": {
+                    "simple": {
+                        "A": "a",
+                        "B": "b"
+                    },
+                    "int": {
+                        "0": "a",
+                        "1": 1,
+                        "2": "1"
+                    }
+                },
+                "unkeyed": {
+                    "simple": [
+                        0,
+                        1
+                    ],
+                    "mixed": [
+                        0,
+                        true,
+                        null
+                    ]
+                },
+                "nil": null,
+                "bool": {
+                    "true": true,
+                    "false": false
+                },
+                "string": "Hello",
+                "float": 3.14,
+                "int": 314
+            }
+            """.data(using: .utf8)!
+            
+            let testRepresentation: DynamicCodable = .keyed([
+                .string("keyed"): .keyed([
+                    .string("simple"): .keyed([
+                        .string("A"): .string("a"),
+                        .string("B"): .string("b")
+                    ]),
+                    .string("int"): .keyed([
+                        .string("0"): .string("a"),
+                        .string("1"): .int(1),
+                        .string("2"): .string("1")
+                    ]),
+                ]),
+                .string("unkeyed"): .keyed([
+                    .string("simple"): .unkeyed([
+                        .int(0),
+                        .int(1)
+                    ]),
+                    .string("mixed"): .unkeyed([
+                        .int(0),
+                        .bool(true),
+                        .nil
+                    ]),
+                ]),
+                .string("nil"): .nil,
+                .string("bool"): .keyed([
+                    .string("true"): .bool(true),
+                    .string("false"): .bool(false)
+                ]),
+                .string("string"): .string("Hello"),
+                .string("float"): .float64(3.14),
+                .string("int"): .int(314)
+            ])
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        // Int keys are currently not supported by the JSON decoder it seems.
+//        do {
+//            let data = """
+//            {
+//                "int": {
+//                    0: "a",
+//                    1: 1,
+//                    2: "1"
+//                }
+//            }
+//            """.data(using: .utf8)!
+//
+//            let testRepresentation: DynamicCodable = .keyed([
+//                .string("int"): .keyed([
+//                    .int(0): .string("a"),
+//                    .int(1): .int(1),
+//                    .int(2): .string("1")
+//                ])
+//            ])
+//
+//            let decoder = JSONDecoder()
+//            let representation = try decoder.decode(DynamicCodable.self, from: data)
+//            XCTAssertEqual(representation, testRepresentation)
+//        } catch {
+//            XCTFail("Error occurred: \(error)")
+//        }
+        
+        do {
+            struct ServerResponse: Equatable, Codable {
+                let status: String
+                let metadata: DynamicCodable
+            }
+            
+            let data = """
+            {
+                "status": "enabled",
+                "metadata": {
+                    "simple": [
+                        0,
+                        1
+                    ],
+                    "mixed": [
+                        0,
+                        true,
+                        null
+                    ]
+                }
+            }
+            """.data(using: .utf8)!
+            
+            let testRepresentation = ServerResponse(
+                status: "enabled",
+                metadata: .keyed([
+                    .string("simple"): .unkeyed([
+                        .int(0),
+                        .int(1)
+                    ]),
+                    .string("mixed"): .unkeyed([
+                        .int(0),
+                        .bool(true),
+                        .nil
+                    ]),
+                ])
+            )
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(ServerResponse.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+    }
+    
+    func testPrimitiveEncoding() {
+        do {
+            let testRepresentation: DynamicCodable = .keyed([:])
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let testRepresentation: DynamicCodable = .unkeyed([])
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let testRepresentation: DynamicCodable = .nil
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let testRepresentation: DynamicCodable = .bool(true)
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let testRepresentation: DynamicCodable = .bool(false)
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let testRepresentation: DynamicCodable = .string("string")
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let testRepresentation: DynamicCodable = .int(1)
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let testRepresentation: DynamicCodable = .uint(9223372036854775808)
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let testRepresentation: DynamicCodable = .double(3.14)
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+    }
+    
+    func testComplexEncoding() {
+        do {
+            let testRepresentation: DynamicCodable = .keyed([
+                .string("keyed"): .keyed([
+                    .string("simple"): .keyed([
+                        .string("A"): .string("a"),
+                        .string("B"): .string("b")
+                    ]),
+                    .string("int"): .keyed([
+                        .string("0"): .string("a"),
+                        .string("1"): .int(1),
+                        .string("2"): .string("1")
+                    ]),
+                ]),
+                .string("unkeyed"): .keyed([
+                    .string("simple"): .unkeyed([
+                        .int(0),
+                        .int(1)
+                    ]),
+                    .string("mixed"): .unkeyed([
+                        .int(0),
+                        .bool(true),
+                        .nil
+                    ]),
+                ]),
+                .string("nil"): .nil,
+                .string("bool"): .keyed([
+                    .string("true"): .bool(true),
+                    .string("false"): .bool(false)
+                ]),
+                .string("string"): .string("Hello"),
+                .string("float"): .float64(3.14),
+                .string("int"): .int(314)
+            ])
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        // Int keys are currently not supported by the JSON decoder it seems.
+        do {
+            let testRepresentation: DynamicCodable = .keyed([
+                .string("int"): .keyed([
+                    .int(0): .string("a"),
+                    .int(1): .int(1),
+                    .int(2): .string("1")
+                ])
+            ])
+            let stringRepresentation: DynamicCodable = .keyed([
+                .string("int"): .keyed([
+                    .string("0"): .string("a"),
+                    .string("1"): .int(1),
+                    .string("2"): .string("1")
+                ])
+            ])
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertNotEqual(representation, testRepresentation)
+            XCTAssertEqual(representation, stringRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        // Int keys are currently not supported by the PropertyList decoder it seems.
+        do {
+            let testRepresentation: DynamicCodable = .keyed([
+                .string("int"): .keyed([
+                    .int(0): .string("a"),
+                    .int(1): .int(1),
+                    .int(2): .string("1")
+                ])
+            ])
+            let stringRepresentation: DynamicCodable = .keyed([
+                .string("int"): .keyed([
+                    .string("0"): .string("a"),
+                    .string("1"): .int(1),
+                    .string("2"): .string("1")
+                ])
+            ])
+            
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .xml
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = PropertyListDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertNotEqual(representation, testRepresentation)
+            XCTAssertEqual(representation, stringRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let testRepresentation: DynamicCodable = .empty
+            
+            let encoder = JSONEncoder()
+            _ = try encoder.encode(testRepresentation)
+            
+            XCTFail("The JSON encoder should have failed here!")
+        } catch {
+            
+        }
+        
+        do {
+            let testRepresentation: DynamicCodable = .empty
+            
+            let encoder = PropertyListEncoder()
+            _ = try encoder.encode(testRepresentation)
+            
+            XCTFail("The PropertyList encoder should have failed here!")
+        } catch {
+            
+        }
+        
+        do {
+            struct ServerResponse: Equatable, Codable {
+                let status: String
+                let metadata: DynamicCodable
+            }
+            
+            let testRepresentation = ServerResponse(
+                status: "enabled",
+                metadata: .keyed([
+                    .string("simple"): .unkeyed([
+                        .int(0),
+                        .int(1)
+                    ]),
+                    .string("mixed"): .unkeyed([
+                        .int(0),
+                        .bool(true),
+                        .nil
+                    ]),
+                ])
+            )
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(ServerResponse.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+    }
 }
