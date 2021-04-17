@@ -10,7 +10,7 @@ Please check the [releases](https://github.com/mochidev/DynamicCodable/releases)
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/mochidev/DynamicCodable.git", .upToNextMinor(from: "0.1.0")),
+    .package(url: "https://github.com/mochidev/DynamicCodable.git", .upToNextMinor(from: "1.0.0")),
 ],
 ...
 targets: [
