@@ -1,0 +1,20 @@
+name: Test DynamicCodable
+
+on:
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - name: Checkout Source
+      uses: actions/checkout@v2
+    - name: Build
+      run: |
+        swift build --build-tests --enable-test-discovery --enable-index-store --configuration release  -Xswiftc -warnings-as-errors -Xcc -Werror
+    - name: Run Tests
+      run: |
+        swift test --skip-build --enable-test-discovery --enable-index-store --configuration release
