@@ -41,6 +41,13 @@ extension DynamicCodable: ExpressibleByStringLiteral, ExpressibleByStringInterpo
     }
 }
 
+extension DynamicCodable: ExpressibleByArrayLiteral {
+    @inlinable
+    public init(arrayLiteral elements: DynamicCodable...) {
+        self = .unkeyed(elements)
+    }
+}
+
 
 extension DynamicCodable.Key: ExpressibleByIntegerLiteral {
     @inlinable
