@@ -20,6 +20,13 @@ extension DynamicCodable: ExpressibleByIntegerLiteral {
     }
 }
 
+extension DynamicCodable: ExpressibleByFloatLiteral {
+    @inlinable
+    public init(floatLiteral value: Double) {
+        self = .float64(value)
+    }
+}
+
 
 extension DynamicCodable.Key: ExpressibleByIntegerLiteral {
     @inlinable
