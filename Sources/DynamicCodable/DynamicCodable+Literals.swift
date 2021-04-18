@@ -27,6 +27,13 @@ extension DynamicCodable: ExpressibleByFloatLiteral {
     }
 }
 
+extension DynamicCodable: ExpressibleByBooleanLiteral {
+    @inlinable
+    public init(booleanLiteral value: Bool) {
+        self = .bool(value)
+    }
+}
+
 
 extension DynamicCodable.Key: ExpressibleByIntegerLiteral {
     @inlinable
