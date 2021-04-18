@@ -87,7 +87,7 @@ final class DynamicCodableTests: XCTestCase {
             }
             """.data(using: .utf8)!
             
-            let testRepresentation: DynamicCodable = .keyed([:])
+            let testRepresentation: DynamicCodable = [:]
             
             let decoder = JSONDecoder()
             let representation = try decoder.decode(DynamicCodable.self, from: data)
@@ -102,7 +102,7 @@ final class DynamicCodableTests: XCTestCase {
             ]
             """.data(using: .utf8)!
             
-            let testRepresentation: DynamicCodable = .unkeyed([])
+            let testRepresentation: DynamicCodable = []
             
             let decoder = JSONDecoder()
             let representation = try decoder.decode(DynamicCodable.self, from: data)
@@ -116,7 +116,7 @@ final class DynamicCodableTests: XCTestCase {
             null
             """.data(using: .utf8)!
             
-            let testRepresentation: DynamicCodable = .nil
+            let testRepresentation: DynamicCodable = nil
             
             let decoder = JSONDecoder()
             let representation = try decoder.decode(DynamicCodable.self, from: data)
@@ -130,7 +130,7 @@ final class DynamicCodableTests: XCTestCase {
             true
             """.data(using: .utf8)!
             
-            let testRepresentation: DynamicCodable = .bool(true)
+            let testRepresentation: DynamicCodable = true
             
             let decoder = JSONDecoder()
             let representation = try decoder.decode(DynamicCodable.self, from: data)
@@ -144,7 +144,7 @@ final class DynamicCodableTests: XCTestCase {
             false
             """.data(using: .utf8)!
             
-            let testRepresentation: DynamicCodable = .bool(false)
+            let testRepresentation: DynamicCodable = false
             
             let decoder = JSONDecoder()
             let representation = try decoder.decode(DynamicCodable.self, from: data)
@@ -158,7 +158,7 @@ final class DynamicCodableTests: XCTestCase {
             "string"
             """.data(using: .utf8)!
             
-            let testRepresentation: DynamicCodable = .string("string")
+            let testRepresentation: DynamicCodable = "string"
             
             let decoder = JSONDecoder()
             let representation = try decoder.decode(DynamicCodable.self, from: data)
@@ -172,7 +172,7 @@ final class DynamicCodableTests: XCTestCase {
             1
             """.data(using: .utf8)!
             
-            let testRepresentation: DynamicCodable = .int(1)
+            let testRepresentation: DynamicCodable = 1
             
             let decoder = JSONDecoder()
             let representation = try decoder.decode(DynamicCodable.self, from: data)
@@ -231,7 +231,7 @@ final class DynamicCodableTests: XCTestCase {
             3.14
             """.data(using: .utf8)!
             
-            let testRepresentation: DynamicCodable = .double(3.14)
+            let testRepresentation: DynamicCodable = 3.14
             
             let decoder = JSONDecoder()
             let representation = try decoder.decode(DynamicCodable.self, from: data)
@@ -278,38 +278,38 @@ final class DynamicCodableTests: XCTestCase {
             }
             """.data(using: .utf8)!
             
-            let testRepresentation: DynamicCodable = .keyed([
-                .string("keyed"): .keyed([
-                    .string("simple"): .keyed([
-                        .string("A"): .string("a"),
-                        .string("B"): .string("b")
-                    ]),
-                    .string("int"): .keyed([
-                        .string("0"): .string("a"),
-                        .string("1"): .int(1),
-                        .string("2"): .string("1")
-                    ]),
-                ]),
-                .string("unkeyed"): .keyed([
-                    .string("simple"): .unkeyed([
-                        .int(0),
-                        .int(1)
-                    ]),
-                    .string("mixed"): .unkeyed([
-                        .int(0),
-                        .bool(true),
-                        .nil
-                    ]),
-                ]),
-                .string("nil"): .nil,
-                .string("bool"): .keyed([
-                    .string("true"): .bool(true),
-                    .string("false"): .bool(false)
-                ]),
-                .string("string"): .string("Hello"),
-                .string("float"): .float64(3.14),
-                .string("int"): .int(314)
-            ])
+            let testRepresentation: DynamicCodable = [
+                "keyed": [
+                    "simple": [
+                        "A": "a",
+                        "B": "b"
+                    ],
+                    "int": [
+                        "0": "a",
+                        "1": 1,
+                        "2": "1"
+                    ],
+                ],
+                "unkeyed": [
+                    "simple": [
+                        0,
+                        1
+                    ],
+                    "mixed": [
+                        0,
+                        true,
+                        nil
+                    ],
+                ],
+                "nil": nil,
+                "bool": [
+                    "true": true,
+                    "false": false
+                ],
+                "string": "Hello",
+                "float": 3.14,
+                "int": 314
+            ]
             
             let decoder = JSONDecoder()
             let representation = try decoder.decode(DynamicCodable.self, from: data)
@@ -330,13 +330,13 @@ final class DynamicCodableTests: XCTestCase {
 //            }
 //            """.data(using: .utf8)!
 //
-//            let testRepresentation: DynamicCodable = .keyed([
-//                .string("int"): .keyed([
-//                    .int(0): .string("a"),
-//                    .int(1): .int(1),
-//                    .int(2): .string("1")
-//                ])
-//            ])
+//            let testRepresentation: DynamicCodable = [
+//                "int": [
+//                    0: "a",
+//                    1: 1,
+//                    2: "1"
+//                ]
+//            ]
 //
 //            let decoder = JSONDecoder()
 //            let representation = try decoder.decode(DynamicCodable.self, from: data)
@@ -370,17 +370,17 @@ final class DynamicCodableTests: XCTestCase {
             
             let testRepresentation = ServerResponse(
                 status: "enabled",
-                metadata: .keyed([
-                    .string("simple"): .unkeyed([
-                        .int(0),
-                        .int(1)
-                    ]),
-                    .string("mixed"): .unkeyed([
-                        .int(0),
-                        .bool(true),
-                        .nil
-                    ]),
-                ])
+                metadata: [
+                    "simple": [
+                        0,
+                        1
+                    ],
+                    "mixed": [
+                        0,
+                        true,
+                        nil
+                    ],
+                ]
             )
             
             let decoder = JSONDecoder()
@@ -393,7 +393,7 @@ final class DynamicCodableTests: XCTestCase {
     
     func testPrimitiveEncoding() {
         do {
-            let testRepresentation: DynamicCodable = .keyed([:])
+            let testRepresentation: DynamicCodable = [:]
             
             let encoder = JSONEncoder()
             let data = try encoder.encode(testRepresentation)
@@ -406,7 +406,7 @@ final class DynamicCodableTests: XCTestCase {
         }
         
         do {
-            let testRepresentation: DynamicCodable = .unkeyed([])
+            let testRepresentation: DynamicCodable = []
             
             let encoder = JSONEncoder()
             let data = try encoder.encode(testRepresentation)
@@ -419,7 +419,7 @@ final class DynamicCodableTests: XCTestCase {
         }
         
         do {
-            let testRepresentation: DynamicCodable = .nil
+            let testRepresentation: DynamicCodable = nil
             
             let encoder = JSONEncoder()
             let data = try encoder.encode(testRepresentation)
@@ -432,7 +432,7 @@ final class DynamicCodableTests: XCTestCase {
         }
         
         do {
-            let testRepresentation: DynamicCodable = .bool(true)
+            let testRepresentation: DynamicCodable = true
             
             let encoder = JSONEncoder()
             let data = try encoder.encode(testRepresentation)
@@ -445,7 +445,7 @@ final class DynamicCodableTests: XCTestCase {
         }
         
         do {
-            let testRepresentation: DynamicCodable = .bool(false)
+            let testRepresentation: DynamicCodable = false
             
             let encoder = JSONEncoder()
             let data = try encoder.encode(testRepresentation)
@@ -458,7 +458,7 @@ final class DynamicCodableTests: XCTestCase {
         }
         
         do {
-            let testRepresentation: DynamicCodable = .string("string")
+            let testRepresentation: DynamicCodable = "string"
             
             let encoder = JSONEncoder()
             let data = try encoder.encode(testRepresentation)
@@ -471,7 +471,7 @@ final class DynamicCodableTests: XCTestCase {
         }
         
         do {
-            let testRepresentation: DynamicCodable = .int(1)
+            let testRepresentation: DynamicCodable = 1
             
             let encoder = JSONEncoder()
             let data = try encoder.encode(testRepresentation)
@@ -526,7 +526,7 @@ final class DynamicCodableTests: XCTestCase {
         }
         
         do {
-            let testRepresentation: DynamicCodable = .double(3.14)
+            let testRepresentation: DynamicCodable = 3.14
             
             let encoder = JSONEncoder()
             let data = try encoder.encode(testRepresentation)
@@ -541,38 +541,38 @@ final class DynamicCodableTests: XCTestCase {
     
     func testComplexEncoding() {
         do {
-            let testRepresentation: DynamicCodable = .keyed([
-                .string("keyed"): .keyed([
-                    .string("simple"): .keyed([
-                        .string("A"): .string("a"),
-                        .string("B"): .string("b")
-                    ]),
-                    .string("int"): .keyed([
-                        .string("0"): .string("a"),
-                        .string("1"): .int(1),
-                        .string("2"): .string("1")
-                    ]),
-                ]),
-                .string("unkeyed"): .keyed([
-                    .string("simple"): .unkeyed([
-                        .int(0),
-                        .int(1)
-                    ]),
-                    .string("mixed"): .unkeyed([
-                        .int(0),
-                        .bool(true),
-                        .nil
-                    ]),
-                ]),
-                .string("nil"): .nil,
-                .string("bool"): .keyed([
-                    .string("true"): .bool(true),
-                    .string("false"): .bool(false)
-                ]),
-                .string("string"): .string("Hello"),
-                .string("float"): .float64(3.14),
-                .string("int"): .int(314)
-            ])
+            let testRepresentation: DynamicCodable = [
+                "keyed": [
+                    "simple": [
+                        "A": "a",
+                        "B": "b"
+                    ],
+                    "int": [
+                        "0": "a",
+                        "1": 1,
+                        "2": "1"
+                    ],
+                ],
+                "unkeyed": [
+                    "simple": [
+                        0,
+                        1
+                    ],
+                    "mixed": [
+                        0,
+                        true,
+                        nil
+                    ],
+                ],
+                "nil": nil,
+                "bool": [
+                    "true": true,
+                    "false": false
+                ],
+                "string": "Hello",
+                "float": 3.14,
+                "int": 314
+            ]
             
             let encoder = JSONEncoder()
             let data = try encoder.encode(testRepresentation)
@@ -586,20 +586,20 @@ final class DynamicCodableTests: XCTestCase {
         
         // Int keys are currently not supported by the JSON decoder it seems.
         do {
-            let testRepresentation: DynamicCodable = .keyed([
-                .string("int"): .keyed([
-                    .int(0): .string("a"),
-                    .int(1): .int(1),
-                    .int(2): .string("1")
-                ])
-            ])
-            let stringRepresentation: DynamicCodable = .keyed([
-                .string("int"): .keyed([
-                    .string("0"): .string("a"),
-                    .string("1"): .int(1),
-                    .string("2"): .string("1")
-                ])
-            ])
+            let testRepresentation: DynamicCodable = [
+                "int": [
+                    0: "a",
+                    1: 1,
+                    2: "1"
+                ]
+            ]
+            let stringRepresentation: DynamicCodable = [
+                "int": [
+                    "0": "a",
+                    "1": 1,
+                    "2": "1"
+                ]
+            ]
             
             let encoder = JSONEncoder()
             let data = try encoder.encode(testRepresentation)
@@ -614,20 +614,20 @@ final class DynamicCodableTests: XCTestCase {
         
         // Int keys are currently not supported by the PropertyList decoder it seems.
         do {
-            let testRepresentation: DynamicCodable = .keyed([
-                .string("int"): .keyed([
-                    .int(0): .string("a"),
-                    .int(1): .int(1),
-                    .int(2): .string("1")
-                ])
-            ])
-            let stringRepresentation: DynamicCodable = .keyed([
-                .string("int"): .keyed([
-                    .string("0"): .string("a"),
-                    .string("1"): .int(1),
-                    .string("2"): .string("1")
-                ])
-            ])
+            let testRepresentation: DynamicCodable = [
+                "int": [
+                    0: "a",
+                    1: 1,
+                    2: "1"
+                ]
+            ]
+            let stringRepresentation: DynamicCodable = [
+                "int": [
+                    "0": "a",
+                    "1": 1,
+                    "2": "1"
+                ]
+            ]
             
             let encoder = PropertyListEncoder()
             encoder.outputFormat = .xml
@@ -671,17 +671,17 @@ final class DynamicCodableTests: XCTestCase {
             
             let testRepresentation = ServerResponse(
                 status: "enabled",
-                metadata: .keyed([
-                    .string("simple"): .unkeyed([
-                        .int(0),
-                        .int(1)
-                    ]),
-                    .string("mixed"): .unkeyed([
-                        .int(0),
-                        .bool(true),
-                        .nil
-                    ]),
-                ])
+                metadata: [
+                    "simple": [
+                        0,
+                        1
+                    ],
+                    "mixed": [
+                        0,
+                        true,
+                        nil
+                    ],
+                ]
             )
             
             let encoder = JSONEncoder()
