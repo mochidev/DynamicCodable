@@ -34,6 +34,13 @@ extension DynamicCodable: ExpressibleByBooleanLiteral {
     }
 }
 
+extension DynamicCodable: ExpressibleByStringLiteral, ExpressibleByStringInterpolation {
+    @inlinable
+    public init(stringLiteral value: String) {
+        self = .string(value)
+    }
+}
+
 
 extension DynamicCodable.Key: ExpressibleByIntegerLiteral {
     @inlinable
@@ -41,4 +48,10 @@ extension DynamicCodable.Key: ExpressibleByIntegerLiteral {
         self = .int(value)
     }
 }
+
+extension DynamicCodable.Key: ExpressibleByStringLiteral, ExpressibleByStringInterpolation {
+    @inlinable
+    public init(stringLiteral value: String) {
+        self = .string(value)
+    }
 }
