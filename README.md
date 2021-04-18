@@ -1,5 +1,17 @@
 # DynamicCodable
 
+<p align="center">
+<a href="https://swiftpackageindex.com/mochidev/DynamicCodable">
+<img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmochidev%2FDynamicCodable%2Fbadge%3Ftype%3Dswift-versions" />
+</a>
+<a href="https://swiftpackageindex.com/mochidev/DynamicCodable">
+<img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmochidev%2FDynamicCodable%2Fbadge%3Ftype%3Dplatforms" />
+</a>
+<a href="https://github.com/mochidev/DynamicCodable/actions?query=workflow%3A%22Test+DynamicCodable%22">
+<img src="https://github.com/mochidev/DynamicCodable/workflows/Test%20Bytes/badge.svg" alt="Test Status" />
+</a>
+</p>
+
 `DynamicCodable` aims to make it easy to preserve arbitrary `Codable` data structures when unarchiving, allowing you to inspect those structures in a type safe way after the decoding is finished.
 
 ## Installation
