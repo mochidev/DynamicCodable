@@ -12,4 +12,19 @@ extension DynamicCodable: ExpressibleByNilLiteral {
         self = .nil
     }
 }
+
+extension DynamicCodable: ExpressibleByIntegerLiteral {
+    @inlinable
+    public init(integerLiteral value: Int) {
+        self = .int(value)
+    }
+}
+
+
+extension DynamicCodable.Key: ExpressibleByIntegerLiteral {
+    @inlinable
+    public init(integerLiteral value: Int) {
+        self = .int(value)
+    }
+}
 }
