@@ -36,6 +36,50 @@ final class DynamicCodableTests: XCTestCase {
         XCTAssertEqual(test[.int(2)], .int(2))
     }
     
+    func testLiterals() {
+        let test: DynamicCodable = nil
+        XCTAssertEqual(test, .nil) // Make sure XCTAssertEqual doesn't mis-interpret nil
+        
+        XCTAssertEqual(DynamicCodable.int(5), 5)
+        XCTAssertEqual(DynamicCodable.float64(5.5), 5.5)
+        XCTAssertEqual(DynamicCodable.bool(true), true)
+        XCTAssertEqual(DynamicCodable.bool(false), false)
+        XCTAssertEqual(DynamicCodable.string("A"), "A")
+        XCTAssertEqual(DynamicCodable.string("1"), "\(1)")
+        XCTAssertEqual(
+            DynamicCodable.unkeyed(
+                [
+                    .empty,
+                    .nil,
+                    .bool(true),
+                    .int(5),
+                    .float64(5.5),
+                    .string("A")
+                ]
+            ), [
+                .empty,
+                nil,
+                true,
+                5,
+                5.5,
+                "A"
+            ]
+        )
+        XCTAssertEqual(
+            DynamicCodable.keyed(
+                [
+                    .string("A"): .string("A"),
+                    .int(1): .int(1),
+                    .string("1"): .string("2")
+                ]
+            ), [
+                "A": "A",
+                1: 1,
+                "1": "2"
+            ]
+        )
+    }
+    
     func testPrimitiveDecoding() {
         do {
             let data = """
