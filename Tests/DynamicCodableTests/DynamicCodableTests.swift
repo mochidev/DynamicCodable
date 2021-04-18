@@ -139,10 +139,41 @@ final class DynamicCodableTests: XCTestCase {
         
         do {
             let data = """
-            9223372036854775808
+            \(UInt(Int.max)+1)
             """.data(using: .utf8)!
             
-            let testRepresentation: DynamicCodable = .uint(9223372036854775808)
+            let testRepresentation: DynamicCodable = .uint(UInt(Int.max)+1)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        // On 32-bit systems, also verify that large enough values get decoded into a .uint64
+        if MemoryLayout<UInt>.size != 8 {
+            do {
+                let data = """
+                \(UInt64(Int64.max)+1)
+                """.data(using: .utf8)!
+                
+                let testRepresentation: DynamicCodable = .uint64(UInt64(Int64.max)+1)
+                
+                let decoder = JSONDecoder()
+                let representation = try decoder.decode(DynamicCodable.self, from: data)
+                XCTAssertEqual(representation, testRepresentation)
+            } catch {
+                XCTFail("Error occurred: \(error)")
+            }
+        }
+        
+        do {
+            let data = """
+                18446744073709551616
+                """.data(using: .utf8)!
+            
+            let testRepresentation: DynamicCodable = .float64(Double(UInt64.max)+1)
             
             let decoder = JSONDecoder()
             let representation = try decoder.decode(DynamicCodable.self, from: data)
@@ -409,7 +440,36 @@ final class DynamicCodableTests: XCTestCase {
         }
         
         do {
-            let testRepresentation: DynamicCodable = .uint(9223372036854775808)
+            let testRepresentation: DynamicCodable = .uint(UInt(Int.max)+1)
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(testRepresentation)
+            
+            let decoder = JSONDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        // On 32-bit systems, also verify that large enough values get decoded into a .uint64
+        if MemoryLayout<UInt>.size != 8 {
+            do {
+                let testRepresentation: DynamicCodable = .uint64(UInt64(Int64.max)+1)
+                
+                let encoder = JSONEncoder()
+                let data = try encoder.encode(testRepresentation)
+                
+                let decoder = JSONDecoder()
+                let representation = try decoder.decode(DynamicCodable.self, from: data)
+                XCTAssertEqual(representation, testRepresentation)
+            } catch {
+                XCTFail("Error occurred: \(error)")
+            }
+        }
+        
+        do {
+            let testRepresentation: DynamicCodable = .float64(Double(UInt64.max)+1)
             
             let encoder = JSONEncoder()
             let data = try encoder.encode(testRepresentation)
