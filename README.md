@@ -8,7 +8,7 @@
 <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmochidev%2FDynamicCodable%2Fbadge%3Ftype%3Dplatforms" />
 </a>
 <a href="https://github.com/mochidev/DynamicCodable/actions?query=workflow%3A%22Test+DynamicCodable%22">
-<img src="https://github.com/mochidev/DynamicCodable/workflows/Test%20Bytes/badge.svg" alt="Test Status" />
+<img src="https://github.com/mochidev/DynamicCodable/workflows/Test%20DynamicCodable/badge.svg" alt="Test Status" />
 </a>
 </p>
 
