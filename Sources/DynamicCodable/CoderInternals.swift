@@ -71,30 +71,28 @@ extension DynamicCodable {
     
     @inline(__always)
     func unwrap<T>(errorHandler: () throws -> Never) rethrows -> T {
-        let value: Any
-        
-        switch self {
-        case .keyed(let keyed):     value = keyed
-        case .unkeyed(let unkeyed): value = unkeyed
-        case .nil:                  value = Nil.none as Any
-        case .bool(let bool):       value = bool
-        case .string(let string):   value = string
-        case .float64(let float64): value = float64
-        case .float32(let float32): value = float32
-        case .int(let int):         value = int
-        case .int8(let int8):       value = int8
-        case .int16(let int16):     value = int16
-        case .int32(let int32):     value = int32
-        case .int64(let int64):     value = int64
-        case .uint(let uint):       value = uint
-        case .uint8(let uint8):     value = uint8
-        case .uint16(let uint16):   value = uint16
-        case .uint32(let uint32):   value = uint32
-        case .uint64(let uint64):   value = uint64
-        case .empty:                value = ()
+        switch T.self {
+        case is Keyed.Type:     if case .keyed(let keyed) = self        { return unsafeBitCast(keyed,       to: T.self) }
+        case is Unkeyed.Type:   if case .unkeyed(let unkeyed) = self    { return unsafeBitCast(unkeyed,     to: T.self) }
+        case is Nil.Type:       if case .nil = self                     { return unsafeBitCast(Nil.none,    to: T.self) }
+        case is Bool.Type:      if case .bool(let bool) = self          { return unsafeBitCast(bool,        to: T.self) }
+        case is String.Type:    if case .string(let string) = self      { return unsafeBitCast(string,      to: T.self) }
+        case is Float64.Type:   if case .float64(let float64) = self    { return unsafeBitCast(float64,     to: T.self) }
+        case is Float32.Type:   if case .float64(let float32) = self    { return unsafeBitCast(float32,     to: T.self) }
+        case is Int.Type:       if case .int(let int) = self            { return unsafeBitCast(int,         to: T.self) }
+        case is Int8.Type:      if case .int8(let int8) = self          { return unsafeBitCast(int8,        to: T.self) }
+        case is Int16.Type:     if case .int16(let int16) = self        { return unsafeBitCast(int16,       to: T.self) }
+        case is Int32.Type:     if case .int32(let int32) = self        { return unsafeBitCast(int32,       to: T.self) }
+        case is Int64.Type:     if case .int64(let int64) = self        { return unsafeBitCast(int64,       to: T.self) }
+        case is UInt.Type:      if case .uint(let uint) = self          { return unsafeBitCast(uint,        to: T.self) }
+        case is UInt8.Type:     if case .uint8(let uint8) = self        { return unsafeBitCast(uint8,       to: T.self) }
+        case is UInt16.Type:    if case .uint16(let uint16) = self      { return unsafeBitCast(uint16,      to: T.self) }
+        case is UInt32.Type:    if case .uint32(let uint32) = self      { return unsafeBitCast(uint32,      to: T.self) }
+        case is UInt64.Type:    if case .uint64(let uint64) = self      { return unsafeBitCast(uint64,      to: T.self) }
+        case is Empty.Type:     if case .empty = self                   { return unsafeBitCast((),          to: T.self) }
+        default: break // TODO: We should do something different here, so we can ignore this case in the caller. Perhaps return a specialized error?
         }
         
-        guard let value = value as? T else { try errorHandler() }
-        return value
+        try errorHandler()
     }
 }
