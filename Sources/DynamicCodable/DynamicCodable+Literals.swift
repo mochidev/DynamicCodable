@@ -48,6 +48,13 @@ extension DynamicCodable: ExpressibleByArrayLiteral {
     }
 }
 
+extension DynamicCodable: ExpressibleByDictionaryLiteral {
+    @inlinable
+    public init(dictionaryLiteral elements: (Key, DynamicCodable)...) {
+        self = .keyed(Dictionary(elements, uniquingKeysWith: { first, _ in first }))
+    }
+}
+
 
 extension DynamicCodable.Key: ExpressibleByIntegerLiteral {
     @inlinable
