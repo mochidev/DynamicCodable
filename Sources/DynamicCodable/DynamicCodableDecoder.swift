@@ -11,6 +11,39 @@
 open class DynamicCodableDecoder {
     // MARK: Options
     
+    /// The strategy to use for decoding `Date` values.
+    /// - Tag: DynamicCodableDecoder.NumberDecodingStrategy
+    public enum NumberDecodingStrategy {
+        /// Decode numeric types using the closest representation that is encoded. For instance, if `Int` is requested, but [.int16](x-source-tag://DynamicCodable.int16)
+        /// is encoded, the value will be converted without issue, so long as it fits within the destination type. This is the default strategy.
+        /// - Tag: DynamicCodableDecoder.NumberDecodingStrategy.closestRepresentation
+        case closestRepresentation
+        
+        /// Decode numeric types exactly how they are represented.
+        /// - Tag: DynamicCodableDecoder.NumberDecodingStrategy.exactMatch
+        case exactMatch
+    }
+    
+    /// The strategy to use for non-JSON-conforming floating-point values (IEEE 754 infinity and NaN).
+    /// - Tag: DynamicCodableDecoder.NonConformingFloatDecodingStrategy
+    public enum NonConformingFloatDecodingStrategy {
+        /// Throw upon encountering non-conforming values. This is the default strategy.
+        /// - Tag: DynamicCodableDecoder.NonConformingFloatDecodingStrategy.throw
+        case `throw`
+        
+        /// Decode the values from the given representation strings.
+        /// - Tag: DynamicCodableDecoder.NonConformingFloatDecodingStrategy.convertFromString
+        case convertFromString(positiveInfinity: String, negativeInfinity: String, nan: String)
+    }
+    
+    /// The strategy to use in decoding numeric types. Defaults to [.closestRepresentation](x-source-tag://DynamicCodableDecoder.NumberDecodingStrategy.closestRepresentation).
+    /// - Tag: DynamicCodableDecoder.numberDecodingStrategy
+    open var numberDecodingStrategy: NumberDecodingStrategy = .closestRepresentation
+    
+    /// The strategy to use in decoding non-conforming numbers. Defaults to [.throw](x-source-tag://DynamicCodableDecoder.NonConformingFloatDecodingStrategy.throw).
+    /// - Tag: DynamicCodableDecoder.nonConformingFloatDecodingStrategy
+    open var nonConformingFloatDecodingStrategy: NonConformingFloatDecodingStrategy = .throw
+
     /// Contextual user-provided information for use during decoding.
     /// - Tag: DynamicCodableDecoder.userInfo
     open var userInfo: [CodingUserInfoKey: Any] = [:]
@@ -18,6 +51,12 @@ open class DynamicCodableDecoder {
     /// Options set on the top-level encoder to pass down the decoding hierarchy.
     /// - Tag: DynamicCodableDecoder.Options
     fileprivate struct Options {
+        /// - Tag: DynamicCodableDecoder.Options.numberDecodingStrategy
+        let numberDecodingStrategy: NumberDecodingStrategy
+        
+        /// - Tag: DynamicCodableDecoder.Options.nonConformingFloatDecodingStrategy
+        let nonConformingFloatDecodingStrategy: NonConformingFloatDecodingStrategy
+        
         /// - Tag: DynamicCodableDecoder.Options.userInfo
         let userInfo: [CodingUserInfoKey: Any]
     }
@@ -26,6 +65,8 @@ open class DynamicCodableDecoder {
     /// - Tag: DynamicCodableDecoder.options
     fileprivate var options: Options {
         return Options(
+            numberDecodingStrategy: numberDecodingStrategy,
+            nonConformingFloatDecodingStrategy: nonConformingFloatDecodingStrategy,
             userInfo: userInfo
         )
     }
@@ -105,7 +146,6 @@ extension DynamicCodableDecoder.Decoder: Swift.Decoder {
     @inline(__always)
     func unwrap<T: Decodable>() throws -> T {
         let value = representation
-        let error = createTypeMismatchError(type: T.self)
         
         typealias Primitive = DynamicCodable
         
@@ -113,24 +153,24 @@ extension DynamicCodableDecoder.Decoder: Swift.Decoder {
         // Return DynamicCodable as is if it is being decoded
         case is DynamicCodable.Type:    return unsafeBitCast(value, to: T.self)
         // Primitive Types fast-path
+        case is Primitive.Float32.Type: return unsafeBitCast(try unwrapFloatingPoint() as Primitive.Float32,    to: T.self)
+        case is Primitive.Float64.Type: return unsafeBitCast(try unwrapFloatingPoint() as Primitive.Float64,    to: T.self)
+        case is Primitive.Int.Type:     return unsafeBitCast(try unwrapFixedWidthInteger() as Primitive.Int,    to: T.self)
+        case is Primitive.Int8.Type:    return unsafeBitCast(try unwrapFixedWidthInteger() as Primitive.Int8,   to: T.self)
+        case is Primitive.Int16.Type:   return unsafeBitCast(try unwrapFixedWidthInteger() as Primitive.Int16,  to: T.self)
+        case is Primitive.Int32.Type:   return unsafeBitCast(try unwrapFixedWidthInteger() as Primitive.Int32,  to: T.self)
+        case is Primitive.Int64.Type:   return unsafeBitCast(try unwrapFixedWidthInteger() as Primitive.Int64,  to: T.self)
+        case is Primitive.UInt.Type:    return unsafeBitCast(try unwrapFixedWidthInteger() as Primitive.UInt,   to: T.self)
+        case is Primitive.UInt8.Type:   return unsafeBitCast(try unwrapFixedWidthInteger() as Primitive.UInt8,  to: T.self)
+        case is Primitive.UInt16.Type:  return unsafeBitCast(try unwrapFixedWidthInteger() as Primitive.UInt16, to: T.self)
+        case is Primitive.UInt32.Type:  return unsafeBitCast(try unwrapFixedWidthInteger() as Primitive.UInt32, to: T.self)
+        case is Primitive.UInt64.Type:  return unsafeBitCast(try unwrapFixedWidthInteger() as Primitive.UInt64, to: T.self)
         case is Primitive.Keyed.Type,
              is Primitive.Unkeyed.Type,
              is Primitive.Nil.Type,
              is Primitive.Bool.Type,
              is Primitive.String.Type,
-             is Primitive.Float64.Type,
-             is Primitive.Float32.Type,
-             is Primitive.Int.Type,
-             is Primitive.Int8.Type,
-             is Primitive.Int16.Type,
-             is Primitive.Int32.Type,
-             is Primitive.Int64.Type,
-             is Primitive.UInt.Type,
-             is Primitive.UInt8.Type,
-             is Primitive.UInt16.Type,
-             is Primitive.UInt32.Type,
-             is Primitive.UInt64.Type,
-             is Primitive.Empty.Type:   return try value.unwrap { throw error }
+             is Primitive.Empty.Type:   return try value.unwrap { throw createTypeMismatchError(type: T.self) }
         // Decodable Types
         default:                        return try T(from: self)
         }
@@ -152,27 +192,63 @@ extension DynamicCodableDecoder.Decoder: Swift.Decoder {
             return floatingPoint
         }
         
-        switch representation {
-        case .float64(let number):  return try validate(T(number), originalValue: number)
-        case .float32(let number):  return try validate(T(number), originalValue: number)
-        case .int(let number):      return try validate(T(number), originalValue: number)
-        case .int8(let number):     return try validate(T(number), originalValue: number)
-        case .int16(let number):    return try validate(T(number), originalValue: number)
-        case .int32(let number):    return try validate(T(number), originalValue: number)
-        case .int64(let number):    return try validate(T(number), originalValue: number)
-        case .uint(let number):     return try validate(T(number), originalValue: number)
-        case .uint8(let number):    return try validate(T(number), originalValue: number)
-        case .uint16(let number):   return try validate(T(number), originalValue: number)
-        case .uint32(let number):   return try validate(T(number), originalValue: number)
-        case .uint64(let number):   return try validate(T(number), originalValue: number)
-            
-        case .string,
-             .bool,
-             .keyed,
-             .unkeyed,
-             .empty,
-             .nil:
-            throw self.createTypeMismatchError(type: T.self)
+        @inline(__always)
+        func validate<T: BinaryFloatingPoint>(_ string: String) throws -> T {
+            switch options.nonConformingFloatDecodingStrategy {
+            case .convertFromString(let posInfString, let negInfString, let nanString):
+                switch string {
+                case posInfString:  return T.infinity
+                case negInfString:  return -T.infinity
+                case nanString:     return T.nan
+                default:            throw createTypeMismatchError(type: T.self)
+                }
+            case .throw:            throw createTypeMismatchError(type: T.self)
+            }
+        }
+        
+        if case .exactMatch = options.numberDecodingStrategy {
+            return try representation.unwrap {
+                if case .string(let string) = representation {
+                    return try validate(string)
+                }
+                
+                throw createTypeMismatchError(type: T.self)
+            }
+        }
+        
+        switch options.numberDecodingStrategy {
+        case .exactMatch:
+            return try representation.unwrap {
+                if case .string(let string) = representation {
+                    return try validate(string)
+                }
+                
+                throw createTypeMismatchError(type: T.self)
+            }
+        case .closestRepresentation:
+            switch representation {
+            case .float64(let number):  return try validate(T(number), originalValue: number)
+            case .float32(let number):  return try validate(T(number), originalValue: number)
+            case .int(let number):      return try validate(T(number), originalValue: number)
+            case .int8(let number):     return try validate(T(number), originalValue: number)
+            case .int16(let number):    return try validate(T(number), originalValue: number)
+            case .int32(let number):    return try validate(T(number), originalValue: number)
+            case .int64(let number):    return try validate(T(number), originalValue: number)
+            case .uint(let number):     return try validate(T(number), originalValue: number)
+            case .uint8(let number):    return try validate(T(number), originalValue: number)
+            case .uint16(let number):   return try validate(T(number), originalValue: number)
+            case .uint32(let number):   return try validate(T(number), originalValue: number)
+            case .uint64(let number):   return try validate(T(number), originalValue: number)
+                
+            case .string(let string):   return try validate(string)
+
+            case .bool,
+                 .keyed,
+                 .unkeyed,
+                 .empty,
+                 .nil:
+                throw createTypeMismatchError(type: T.self)
+            }
         }
     }
     
@@ -192,26 +268,26 @@ extension DynamicCodableDecoder.Decoder: Swift.Decoder {
             return fixedWidthInteger
         }
         
-        switch representation {
-        case .int(let number):      return try validate(T(exactly: number), originalValue: number)
-        case .int8(let number):     return try validate(T(exactly: number), originalValue: number)
-        case .int16(let number):    return try validate(T(exactly: number), originalValue: number)
-        case .int32(let number):    return try validate(T(exactly: number), originalValue: number)
-        case .int64(let number):    return try validate(T(exactly: number), originalValue: number)
-        case .uint(let number):     return try validate(T(exactly: number), originalValue: number)
-        case .uint8(let number):    return try validate(T(exactly: number), originalValue: number)
-        case .uint16(let number):   return try validate(T(exactly: number), originalValue: number)
-        case .uint32(let number):   return try validate(T(exactly: number), originalValue: number)
-        case .uint64(let number):   return try validate(T(exactly: number), originalValue: number)
-        case .float64(let number):  return try validate(T(exactly: number), originalValue: number)
-        case .float32(let number):  return try validate(T(exactly: number), originalValue: number)
-        case .string,
-             .bool,
-             .keyed,
-             .unkeyed,
-             .empty,
-             .nil:
-            throw self.createTypeMismatchError(type: T.self)
+        switch options.numberDecodingStrategy {
+        case .exactMatch:
+            return try representation.unwrap { throw createTypeMismatchError(type: T.self) }
+        case .closestRepresentation:
+            switch representation {
+            case .int(let number):      return try validate(T(exactly: number), originalValue: number)
+            case .int8(let number):     return try validate(T(exactly: number), originalValue: number)
+            case .int16(let number):    return try validate(T(exactly: number), originalValue: number)
+            case .int32(let number):    return try validate(T(exactly: number), originalValue: number)
+            case .int64(let number):    return try validate(T(exactly: number), originalValue: number)
+            case .uint(let number):     return try validate(T(exactly: number), originalValue: number)
+            case .uint8(let number):    return try validate(T(exactly: number), originalValue: number)
+            case .uint16(let number):   return try validate(T(exactly: number), originalValue: number)
+            case .uint32(let number):   return try validate(T(exactly: number), originalValue: number)
+            case .uint64(let number):   return try validate(T(exactly: number), originalValue: number)
+            case .float64(let number):  return try validate(T(exactly: number), originalValue: number)
+            case .float32(let number):  return try validate(T(exactly: number), originalValue: number)
+            case .string, .bool, .keyed, .unkeyed, .empty, .nil:
+                throw self.createTypeMismatchError(type: T.self)
+            }
         }
     }
     
@@ -265,24 +341,7 @@ extension DynamicCodableDecoder.Decoder {
             }
         }
         
-        func decodeNil(forKey key: Key) throws -> Bool                      { try getValue(forKey: key) { $0.representation == .nil } }
-        func decode(_ type: Bool.Type, forKey key: Key) throws -> Bool      { try getValue(forKey: key) { try $0.unwrap() } }
-        func decode(_ type: String.Type, forKey key: Key) throws -> String  { try getValue(forKey: key) { try $0.unwrap() } }
-        
-        func decode(_: Double.Type, forKey key: Key) throws -> Double       { try getValue(forKey: key) { try $0.unwrapFloatingPoint() } }
-        func decode(_: Float.Type, forKey key: Key) throws -> Float         { try getValue(forKey: key) { try $0.unwrapFloatingPoint() } }
-        
-        func decode(_: Int.Type, forKey key: Key) throws -> Int             { try getValue(forKey: key) { try $0.unwrapFixedWidthInteger() } }
-        func decode(_: Int8.Type, forKey key: Key) throws -> Int8           { try getValue(forKey: key) { try $0.unwrapFixedWidthInteger() } }
-        func decode(_: Int16.Type, forKey key: Key) throws -> Int16         { try getValue(forKey: key) { try $0.unwrapFixedWidthInteger() } }
-        func decode(_: Int32.Type, forKey key: Key) throws -> Int32         { try getValue(forKey: key) { try $0.unwrapFixedWidthInteger() } }
-        func decode(_: Int64.Type, forKey key: Key) throws -> Int64         { try getValue(forKey: key) { try $0.unwrapFixedWidthInteger() } }
-        func decode(_: UInt.Type, forKey key: Key) throws -> UInt           { try getValue(forKey: key) { try $0.unwrapFixedWidthInteger() } }
-        func decode(_: UInt8.Type, forKey key: Key) throws -> UInt8         { try getValue(forKey: key) { try $0.unwrapFixedWidthInteger() } }
-        func decode(_: UInt16.Type, forKey key: Key) throws -> UInt16       { try getValue(forKey: key) { try $0.unwrapFixedWidthInteger() } }
-        func decode(_: UInt32.Type, forKey key: Key) throws -> UInt32       { try getValue(forKey: key) { try $0.unwrapFixedWidthInteger() } }
-        func decode(_: UInt64.Type, forKey key: Key) throws -> UInt64       { try getValue(forKey: key) { try $0.unwrapFixedWidthInteger() } }
-        
+        func decodeNil(forKey key: Key) throws -> Bool { try getValue(forKey: key) { $0.representation == .nil } }
         func decode<T>(_: T.Type, forKey key: Key) throws -> T where T: Decodable   { try getValue(forKey: key) { try $0.unwrap() } }
         
         func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: Key) throws -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey {
@@ -353,24 +412,7 @@ extension DynamicCodableDecoder.Decoder {
             }
         }
         
-        mutating func decode(_ type: Bool.Type) throws -> Bool      { try getNextValue { try $0.unwrap() } }
-        mutating func decode(_ type: String.Type) throws -> String  { try getNextValue { try $0.unwrap() } }
-        
-        mutating func decode(_: Double.Type) throws -> Double   { try getNextValue { try $0.unwrapFloatingPoint() } }
-        mutating func decode(_: Float.Type) throws -> Float     { try getNextValue { try $0.unwrapFloatingPoint() } }
-        
-        mutating func decode(_: Int.Type) throws -> Int         { try getNextValue { try $0.unwrapFixedWidthInteger() } }
-        mutating func decode(_: Int8.Type) throws -> Int8       { try getNextValue { try $0.unwrapFixedWidthInteger() } }
-        mutating func decode(_: Int16.Type) throws -> Int16     { try getNextValue { try $0.unwrapFixedWidthInteger() } }
-        mutating func decode(_: Int32.Type) throws -> Int32     { try getNextValue { try $0.unwrapFixedWidthInteger() } }
-        mutating func decode(_: Int64.Type) throws -> Int64     { try getNextValue { try $0.unwrapFixedWidthInteger() } }
-        mutating func decode(_: UInt.Type) throws -> UInt       { try getNextValue { try $0.unwrapFixedWidthInteger() } }
-        mutating func decode(_: UInt8.Type) throws -> UInt8     { try getNextValue { try $0.unwrapFixedWidthInteger() } }
-        mutating func decode(_: UInt16.Type) throws -> UInt16   { try getNextValue { try $0.unwrapFixedWidthInteger() } }
-        mutating func decode(_: UInt32.Type) throws -> UInt32   { try getNextValue { try $0.unwrapFixedWidthInteger() } }
-        mutating func decode(_: UInt64.Type) throws -> UInt64   { try getNextValue { try $0.unwrapFixedWidthInteger() } }
-        
-        mutating func decode<T>(_: T.Type) throws -> T where T: Decodable   { try getNextValue { try $0.unwrap() } }
+        mutating func decode<T>(_: T.Type) throws -> T where T: Decodable { try getNextValue { try $0.unwrap() } }
         
         mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey {
             try getNextValue { try $0.container(keyedBy: type) }
@@ -388,24 +430,6 @@ extension DynamicCodableDecoder.Decoder {
         var codingPath: [CodingKey] { decoder.codingPath }
         
         func decodeNil() -> Bool { decoder.representation == .nil }
-        
-        func decode(_: Bool.Type) throws -> Bool        { try decoder.unwrap() }
-        func decode(_: String.Type) throws -> String    { try decoder.unwrap() }
-
-        func decode(_: Double.Type) throws -> Double    { try decoder.unwrapFloatingPoint() }
-        func decode(_: Float.Type) throws -> Float      { try decoder.unwrapFloatingPoint() }
-
-        func decode(_: Int.Type) throws -> Int          { try decoder.unwrapFixedWidthInteger() }
-        func decode(_: Int8.Type) throws -> Int8        { try decoder.unwrapFixedWidthInteger() }
-        func decode(_: Int16.Type) throws -> Int16      { try decoder.unwrapFixedWidthInteger() }
-        func decode(_: Int32.Type) throws -> Int32      { try decoder.unwrapFixedWidthInteger() }
-        func decode(_: Int64.Type) throws -> Int64      { try decoder.unwrapFixedWidthInteger() }
-        func decode(_: UInt.Type) throws -> UInt        { try decoder.unwrapFixedWidthInteger() }
-        func decode(_: UInt8.Type) throws -> UInt8      { try decoder.unwrapFixedWidthInteger() }
-        func decode(_: UInt16.Type) throws -> UInt16    { try decoder.unwrapFixedWidthInteger() }
-        func decode(_: UInt32.Type) throws -> UInt32    { try decoder.unwrapFixedWidthInteger() }
-        func decode(_: UInt64.Type) throws -> UInt64    { try decoder.unwrapFixedWidthInteger() }
-
-        func decode<T>(_: T.Type) throws -> T where T: Decodable    { try decoder.unwrap() }
+        func decode<T>(_: T.Type) throws -> T where T: Decodable { try decoder.unwrap() }
     }
 }

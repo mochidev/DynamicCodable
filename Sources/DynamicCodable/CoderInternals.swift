@@ -70,7 +70,7 @@ extension DynamicCodable {
     }
     
     @inline(__always)
-    func unwrap<T>(errorHandler: () throws -> Never) rethrows -> T {
+    func unwrap<T>(errorHandler: () throws -> T) rethrows -> T {
         switch T.self {
         case is Keyed.Type:     if case .keyed(let keyed) = self        { return unsafeBitCast(keyed,       to: T.self) }
         case is Unkeyed.Type:   if case .unkeyed(let unkeyed) = self    { return unsafeBitCast(unkeyed,     to: T.self) }
@@ -93,6 +93,6 @@ extension DynamicCodable {
         default: break // TODO: We should do something different here, so we can ignore this case in the caller. Perhaps return a specialized error?
         }
         
-        try errorHandler()
+        return try errorHandler()
     }
 }
