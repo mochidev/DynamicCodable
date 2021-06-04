@@ -145,13 +145,11 @@ extension DynamicCodableDecoder.Decoder: Swift.Decoder {
     
     @inline(__always)
     func unwrap<T: Decodable>() throws -> T {
-        let value = representation
-        
         typealias Primitive = DynamicCodable
         
         switch T.self {
         // Return DynamicCodable as is if it is being decoded
-        case is DynamicCodable.Type:    return unsafeBitCast(value, to: T.self)
+        case is DynamicCodable.Type:    return unsafeBitCast(representation, to: T.self)
         // Primitive Types fast-path
         case is Primitive.Float32.Type: return unsafeBitCast(try unwrapFloatingPoint() as Primitive.Float32,    to: T.self)
         case is Primitive.Float64.Type: return unsafeBitCast(try unwrapFloatingPoint() as Primitive.Float64,    to: T.self)
@@ -170,10 +168,15 @@ extension DynamicCodableDecoder.Decoder: Swift.Decoder {
              is Primitive.Nil.Type,
              is Primitive.Bool.Type,
              is Primitive.String.Type,
-             is Primitive.Empty.Type:   return try value.unwrap { throw createTypeMismatchError(type: T.self) }
+             is Primitive.Empty.Type:   return try unwrapPrimitive()
         // Decodable Types
         default:                        return try T(from: self)
         }
+    }
+    
+    @inline(__always)
+    private func unwrapPrimitive<T>() throws -> T {
+        try representation.unwrap { throw createTypeMismatchError(type: T.self) }
     }
     
     @inline(__always)
