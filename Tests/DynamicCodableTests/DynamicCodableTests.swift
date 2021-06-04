@@ -694,4 +694,50 @@ final class DynamicCodableTests: XCTestCase {
             XCTFail("Error occurred: \(error)")
         }
     }
+    
+    func testDynamicCodableDecoder() {
+        do {
+            struct Struct: Equatable, Codable {
+                let string: String
+                let int: Int
+                let int16: Int16
+                let optional: String?
+            }
+            
+            let data: DynamicCodable = .keyed([
+                "string": "A",
+                "int": 2,
+                "int16": .int16(2685),
+                "optional": nil
+            ])
+            
+            let testRepresentation = Struct(
+                string: "A",
+                int: 2,
+                int16: 2685,
+                optional: nil
+            )
+            
+            let decoder = DynamicCodableDecoder()
+            let representation = try decoder.decode(Struct.self, from: data)
+            XCTAssertEqual(representation, testRepresentation)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+        
+        do {
+            let data: DynamicCodable = .keyed([
+                "string": "A",
+                "int": 2,
+                "int16": .int16(2685),
+                "optional": nil
+            ])
+            
+            let decoder = DynamicCodableDecoder()
+            let representation = try decoder.decode(DynamicCodable.self, from: data)
+            XCTAssertEqual(representation, data)
+        } catch {
+            XCTFail("Error occurred: \(error)")
+        }
+    }
 }
