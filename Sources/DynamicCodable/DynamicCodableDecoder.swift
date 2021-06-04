@@ -6,6 +6,8 @@
 //  Copyright © 2021 Mochi Development, Inc. All rights reserved.
 //
 
+import Foundation
+
 /// `DynamicCodableDecoder` facilitates the decoding of [DynamicCodable](x-source-tag://DynamicCodable) representations into semantic `Decodable` types.
 /// - Tag: DynamicCodableDecoder
 open class DynamicCodableDecoder {
@@ -24,6 +26,35 @@ open class DynamicCodableDecoder {
         case exactMatch
     }
     
+    /// The strategy to use for decoding `Date` values.
+    /// - Tag: DynamicCodableDecoder.DateDecodingStrategy
+    public enum DateDecodingStrategy {
+        /// Defer to `Date` for decoding. This is the default strategy.
+        /// - Tag: DynamicCodableDecoder.DateDecodingStrategy.deferredToDate
+        case deferredToDate
+
+        /// Decode the `Date` as a UNIX timestamp from a JSON number.
+        /// - Tag: DynamicCodableDecoder.DateDecodingStrategy.secondsSince1970
+        case secondsSince1970
+
+        /// Decode the `Date` as UNIX millisecond timestamp from a JSON number.
+        /// - Tag: DynamicCodableDecoder.DateDecodingStrategy.millisecondsSince1970
+        case millisecondsSince1970
+
+        /// Decode the `Date` as an ISO-8601-formatted string (in RFC 3339 format).
+        /// - Tag: DynamicCodableDecoder.DateDecodingStrategy.iso8601
+        @available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
+        case iso8601
+
+        /// Decode the `Date` as a string parsed by the given formatter.
+        /// - Tag: DynamicCodableDecoder.DateDecodingStrategy.formatted
+        case formatted(DateFormatter)
+
+        /// Decode the `Date` as a custom value decoded by the given closure.
+        /// - Tag: DynamicCodableDecoder.DateDecodingStrategy.custom
+        case custom((_ decoder: Swift.Decoder) throws -> Date)
+    }
+
     /// The strategy to use for non-JSON-conforming floating-point values (IEEE 754 infinity and NaN).
     /// - Tag: DynamicCodableDecoder.NonConformingFloatDecodingStrategy
     public enum NonConformingFloatDecodingStrategy {
@@ -40,6 +71,10 @@ open class DynamicCodableDecoder {
     /// - Tag: DynamicCodableDecoder.numberDecodingStrategy
     open var numberDecodingStrategy: NumberDecodingStrategy = .closestRepresentation
     
+    /// The strategy to use in decoding dates. Defaults to [.deferredToDate](x-source-tag://DynamicCodableDecoder.DateDecodingStrategy.deferredToDate).
+    /// - Tag: DynamicCodableDecoder.dateDecodingStrategy
+    open var dateDecodingStrategy: DateDecodingStrategy = .deferredToDate
+
     /// The strategy to use in decoding non-conforming numbers. Defaults to [.throw](x-source-tag://DynamicCodableDecoder.NonConformingFloatDecodingStrategy.throw).
     /// - Tag: DynamicCodableDecoder.nonConformingFloatDecodingStrategy
     open var nonConformingFloatDecodingStrategy: NonConformingFloatDecodingStrategy = .throw
@@ -54,6 +89,9 @@ open class DynamicCodableDecoder {
         /// - Tag: DynamicCodableDecoder.Options.numberDecodingStrategy
         let numberDecodingStrategy: NumberDecodingStrategy
         
+        /// - Tag: DynamicCodableDecoder.Options.dateDecodingStrategy
+        let dateDecodingStrategy: DateDecodingStrategy
+        
         /// - Tag: DynamicCodableDecoder.Options.nonConformingFloatDecodingStrategy
         let nonConformingFloatDecodingStrategy: NonConformingFloatDecodingStrategy
         
@@ -66,6 +104,7 @@ open class DynamicCodableDecoder {
     fileprivate var options: Options {
         return Options(
             numberDecodingStrategy: numberDecodingStrategy,
+            dateDecodingStrategy: dateDecodingStrategy,
             nonConformingFloatDecodingStrategy: nonConformingFloatDecodingStrategy,
             userInfo: userInfo
         )
@@ -169,6 +208,8 @@ extension DynamicCodableDecoder.Decoder: Swift.Decoder {
              is Primitive.Bool.Type,
              is Primitive.String.Type,
              is Primitive.Empty.Type:   return try unwrapPrimitive()
+        // Special Cases
+        case is Date.Type:              return unsafeBitCast(try unwrapDate(), to: T.self)
         // Decodable Types
         default:                        return try T(from: self)
         }
@@ -281,6 +322,32 @@ extension DynamicCodableDecoder.Decoder: Swift.Decoder {
             case .string, .bool, .keyed, .unkeyed, .empty, .nil:
                 throw self.createTypeMismatchError(type: T.self)
             }
+        }
+    }
+    
+    @inline(__always)
+    private func unwrapDate() throws -> Date {
+        switch options.dateDecodingStrategy {
+        case .deferredToDate:           return try Date(from: self)
+        case .secondsSince1970:         return Date(timeIntervalSince1970: try unwrapFloatingPoint())
+        case .millisecondsSince1970:    return Date(timeIntervalSince1970: try unwrapFloatingPoint() / 1000.0)
+        case .custom(let closure):      return try closure(self)
+        case .iso8601:
+            guard #available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *) else {
+                preconditionFailure("ISO8601DateFormatter is unavailable on this platform.")
+            }
+            
+            guard let date = _iso8601Formatter.date(from: try unwrapPrimitive()) else {
+                throw dataCorruptedError("Expected date string to be ISO8601-formatted.")
+            }
+            
+            return date
+        case .formatted(let formatter):
+            guard let date = formatter.date(from: try unwrapPrimitive()) else {
+                throw dataCorruptedError("Date string does not match format expected by formatter.")
+            }
+            
+            return date
         }
     }
     
@@ -435,3 +502,11 @@ extension DynamicCodableDecoder.Decoder {
         func decode<T>(_: T.Type) throws -> T where T: Decodable { try decoder.unwrap() }
     }
 }
+
+// NOTE: This value is implicitly lazy and _must_ be lazy. We're compiled against the latest SDK (w/ ISO8601DateFormatter), but linked against whichever Foundation the user has. ISO8601DateFormatter might not exist, so we better not hit this code path on an older OS.
+@available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
+private var _iso8601Formatter: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = .withInternetDateTime
+    return formatter
+}()
