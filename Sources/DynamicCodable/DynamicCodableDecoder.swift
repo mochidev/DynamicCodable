@@ -184,12 +184,7 @@ extension DynamicCodableDecoder.Decoder: Swift.Decoder {
         @inline(__always)
         func validate<T: BinaryFloatingPoint>(_ floatingPoint: T, originalValue: CustomStringConvertible) throws -> T {
             guard floatingPoint.isFinite else {
-                throw DecodingError.dataCorrupted(
-                    .init(
-                        codingPath: codingPath,
-                        debugDescription: "Represented number <\(floatingPoint)> does not fit in \(T.self)."
-                    )
-                )
+                throw dataCorruptedError("Represented number <\(floatingPoint)> does not fit in \(T.self).")
             }
             
             return floatingPoint
@@ -260,12 +255,7 @@ extension DynamicCodableDecoder.Decoder: Swift.Decoder {
         @inline(__always)
         func validate<T: FixedWidthInteger>(_ fixedWidthInteger: T?, originalValue: CustomStringConvertible) throws -> T {
             guard let fixedWidthInteger = fixedWidthInteger else {
-                throw DecodingError.dataCorrupted(
-                    .init(
-                        codingPath: codingPath,
-                        debugDescription: "Represented number <\(originalValue)> does not fit in \(T.self)."
-                    )
-                )
+                throw dataCorruptedError("Represented number <\(originalValue)> does not fit in \(T.self).")
             }
             
             return fixedWidthInteger
@@ -300,6 +290,15 @@ extension DynamicCodableDecoder.Decoder: Swift.Decoder {
             .init(
                 codingPath: codingPath,
                 debugDescription: "Expected to decode \(type) but found \(representation.debugDataTypeDescription) instead."
+            )
+        )
+    }
+    
+    private func dataCorruptedError(_ debugDescription: String) -> DecodingError {
+        DecodingError.dataCorrupted(
+            .init(
+                codingPath: codingPath,
+                debugDescription: debugDescription
             )
         )
     }
